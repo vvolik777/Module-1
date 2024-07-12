@@ -1,5 +1,6 @@
-homework = 12
+homework = 12 #текущее число,птм преобразовываем в строку
 worktime = 1.5
-coursename = 'Python'
+coursename = 'Python' #уже строка, преорбазование не надо
 time1work = worktime/homework
-print('Курс:'+str(coursename)+', всего задач:'+str(homework)+', затрачено часов:'+str(worktime)+', среднее время выполнения '+str(time1work)+' часа.')
+print('Курс:'+coursename+', всего задач:'+str(homework)+', затрачено часов:'+str(worktime)+', среднее время выполнения '+str(time1work)+' часа.')
+#преобразование в строку
