@@ -29,10 +29,10 @@ d1 = int(d)
 d2 = int ((d-d1)*100)
 print(d)
 print(d1)
+
 print(d2)
 
 print(c1==d2 or d1==c2)
-
 
 
 
