@@ -12,3 +12,4 @@ n = int(input("Введите число от 3 до 20: ")) #вводим в к
 
 password = generate_password(n)
 print(f"Пароль для числа {n}:", password)
+
