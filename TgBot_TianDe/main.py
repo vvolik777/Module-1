@@ -5,15 +5,15 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types.callback_query import CallbackQuery
-
 from keyboards import keyboard, inline_keyboard, buy_menu
 from products import products
+from crud_functions import initiate_db, get_all_products
 
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
-api = 'Telegram_Token_Api'
+api = '7500178344:AAHR-4Wreuf7V19HCqXAEBfhiHvURpZELqA'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
@@ -102,36 +102,64 @@ async def send_calories(message: types.Message, state: FSMContext):
         await message.answer("Пожалуйста, введите корректный вес (целое положительное число).")
 
 
+initiate_db()
+
+links = {
+    "Фитоформула": {"url": "https://oldsite.tiande.ru/~N0dQs", "image": "4.png"},
+    "Белковый коктейль": {"url": "https://oldsite.tiande.ru/~dRfTC", "image": "1.png"},
+    "Слимчай": {"url": "https://oldsite.tiande.ru/~2pryn", "image": "3.png"},
+    "Имбирный чай": {"url": "https://oldsite.tiande.ru/~h6yFz", "image": "2.png"},
+}
+
+
 @dp.message_handler(Text(equals="Купить"))
 async def show_products(message: types.Message):
-    for product_id, info in products.items():
-        if product_id == 1:
-            product_link = "https://oldsite.tiande.ru/~dRfTC"
-        elif product_id == 2:
-            product_link = "https://oldsite.tiande.ru/~h6yFz"
-        elif product_id == 3:
-            product_link = "https://oldsite.tiande.ru/~2pryn"
-        elif product_id == 4:
-            product_link = "https://oldsite.tiande.ru/~N0dQs"
-        else:
-            product_link = f"https://example.com/product/{product_id}"
+    products = get_all_products()
+    if not products:
+        await message.answer("На данный момент нет доступных продуктов.")
+        return
 
-        with open(f'{product_id}.png', 'rb') as img:
-            product_info = (
-                f"<b>Название:</b> {info['name']}\n"
-                f"<b>Описание:</b> {info['description']}\n"
-                f"<b>Цена:</b> <a href='{product_link}'>{info['price']} руб.</a>"
-            )
-            await message.answer_photo(img, product_info, parse_mode=ParseMode.HTML)
+    for product in products:
+        product_id, title, description, price = product
+        product_links = links.get(title, {"url": "https://example.com", "image": None})
+        product_url = product_links["url"]
+        product_image = product_links["image"]
+
+        product_info = (
+            f"*Название:* {title}\n"
+            f"*Описание:* {description}\n"
+            f"*Цена:* [{price} руб.]({product_url})"
+        )
+
+        if product_image:
+            try:
+                with open(product_image, 'rb') as photo:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=photo,
+                        caption=product_info,
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+            except FileNotFoundError:
+                await message.answer(f"Изображение для {title} не найдено.")
+        else:
+            await message.answer(product_info, parse_mode=ParseMode.MARKDOWN)
 
     await message.answer("Выберите продукт для покупки:", reply_markup=buy_menu)
 
 
 @dp.callback_query_handler(Text(startswith="product_buying"))
 async def product_bought(call: CallbackQuery):
-    product_number = int(call.data.split("_")[-1])
-    product_name = products[product_number]["name"]
-    await call.message.answer(f"Вы успешно приобрели {product_name}!")
+    product_id = int(call.data.split("_")[-1])
+    products = get_all_products()
+    product = next((p for p in products if p[0] == product_id), None)
+
+    if not product:
+        await call.message.answer("Ошибка: выбранный продукт не найден.")
+        return
+
+    title = product[1]
+    await call.message.answer(f"Вы успешно приобрели {title}!")
     await call.answer()
 
 
