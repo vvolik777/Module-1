@@ -105,21 +105,25 @@ async def send_calories(message: types.Message, state: FSMContext):
 @dp.message_handler(Text(equals="Купить"))
 async def show_products(message: types.Message):
     for product_id, info in products.items():
-        try:
-            with open(f'{product_id}.png', 'rb') as img:
-                product_info = (
-                    f"*Название:* {info['name']}\n"
-                    f"*Описание:* {info['description']}\n"
-                    f"*Цена:* {info['price']} руб."
-                )
-                await message.answer_photo(img, product_info, parse_mode=ParseMode.MARKDOWN)
-        except FileNotFoundError:
+        if product_id == 1:
+            product_link = "https://oldsite.tiande.ru/~dRfTC"
+        elif product_id == 2:
+            product_link = "https://oldsite.tiande.ru/~h6yFz"
+        elif product_id == 3:
+            product_link = "https://oldsite.tiande.ru/~2pryn"
+        elif product_id == 4:
+            product_link = "https://oldsite.tiande.ru/~N0dQs"
+        else:
+            product_link = f"https://example.com/product/{product_id}"
+
+        with open(f'{product_id}.png', 'rb') as img:
             product_info = (
-                f"*Название:* {info['name']}\n"
-                f"*Описание:* {info['description']}\n"
-                f"*Цена:* {info['price']} руб."
+                f"<b>Название:</b> {info['name']}\n"
+                f"<b>Описание:</b> {info['description']}\n"
+                f"<b>Цена:</b> <a href='{product_link}'>{info['price']} руб.</a>"
             )
-            await message.answer(product_info, parse_mode=ParseMode.MARKDOWN)
+            await message.answer_photo(img, product_info, parse_mode=ParseMode.HTML)
+
     await message.answer("Выберите продукт для покупки:", reply_markup=buy_menu)
 
 
