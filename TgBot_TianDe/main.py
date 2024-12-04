@@ -13,7 +13,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-api = '7500178344:AAEa4jeihIn9I0OWt229UMKlFq8nKVVm8_I'
+api = 'Telegram_Token_Api'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
