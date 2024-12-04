@@ -16,6 +16,7 @@ def initiate_db():
     connection.close()
 
 
+
 def get_all_products():
     conn = sqlite3.connect("products.db")
     cursor = conn.cursor()
