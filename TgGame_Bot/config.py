@@ -1,4 +1,4 @@
-API = '7500178344:AAEa4jeihIn9I0OWt229UMKlFq8nKVVm8_I'
+API = 'token_api'
 
 priceM = 1500
 priceL = 2000
