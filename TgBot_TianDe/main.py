@@ -1,19 +1,19 @@
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import ParseMode
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher.filters import Text
 from aiogram.types.callback_query import CallbackQuery
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from keyboards import keyboard, inline_keyboard, buy_menu
 from products import products
-from crud_functions import initiate_db, get_all_products
+from crud_functions import initiate_db, get_all_products, add_user, is_included
 
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
-api = '7500178344:AAHR-4Wreuf7V19HCqXAEBfhiHvURpZELqA'
+api = 'Token_Api'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
@@ -22,6 +22,13 @@ class UserState(StatesGroup):
     age = State()
     growth = State()
     weight = State()
+
+
+class RegistrationState(StatesGroup):
+    username = State()
+    email = State()
+    age = State()
+    balance = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -34,6 +41,54 @@ async def start_message(message: types.Message):
     )
 
 
+@dp.message_handler(Text(equals="Регистрация"))
+async def sing_up(message: types.Message):
+    await message.answer("Введите имя пользователя (только латинский алфавит):")
+    await RegistrationState.username.set()
+
+
+@dp.message_handler(state=RegistrationState.username)
+async def set_username(message: types.Message, state: FSMContext):
+    username = message.text
+    if is_included(username):
+        await message.answer("Пользователь существует, введите другое имя.")
+        return
+    await state.update_data(username=username)
+    await message.answer("Введите свой email:")
+    await RegistrationState.email.set()
+
+
+@dp.message_handler(state=RegistrationState.email)
+async def set_email(message: types.Message, state: FSMContext):
+    email = message.text
+    await state.update_data(email=email)
+    await message.answer("Введите свой возраст:")
+    await RegistrationState.age.set()
+
+
+@dp.message_handler(state=RegistrationState.age)
+async def set_age(message: types.Message, state: FSMContext):
+    try:
+        age = int(message.text)
+        if age <= 0:
+            raise ValueError("Возраст должен быть положительным числом.")
+        await state.update_data(age=age)
+
+        user_data = await state.get_data()
+        username = user_data['username']
+        email = user_data['email']
+
+        add_user(username, email, age)
+
+        await message.answer(f"Вы успешно зарегистрированы! Добро пожаловать, {username}.")
+        await state.finish()
+
+        await start_message(message)
+
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный возраст (целое положительное число).")
+
+
 @dp.message_handler(Text(equals="Рассчитать"))
 async def main_menu(message: types.Message):
     await message.answer("Выберите опцию:", reply_markup=inline_keyboard)
@@ -41,10 +96,9 @@ async def main_menu(message: types.Message):
 
 @dp.callback_query_handler(Text(equals="formulas"))
 async def get_formulas(call: CallbackQuery):
-    formula = (
-        "Формула Миффлина-Сан Жеора:\n"
-        "*Для женщин*: 10 × вес (кг) + 6.25 × рост (см) - 5 × возраст (годы) - 161\n"
-    )
+    formula = ("Формула Миффлина-Сан Жеора:\n"
+               "*Для женщин*: 10 × вес (кг) + 6.25 × рост (см) - 5 × возраст (годы) - 161\n"
+               )
     await call.message.answer(formula, parse_mode=ParseMode.MARKDOWN)
     await call.answer()
 
@@ -115,12 +169,14 @@ links = {
 @dp.message_handler(Text(equals="Купить"))
 async def show_products(message: types.Message):
     products = get_all_products()
+
     if not products:
         await message.answer("На данный момент нет доступных продуктов.")
         return
 
     for product in products:
         product_id, title, description, price = product
+
         product_links = links.get(title, {"url": "https://example.com", "image": None})
         product_url = product_links["url"]
         product_image = product_links["image"]
@@ -133,7 +189,7 @@ async def show_products(message: types.Message):
 
         if product_image:
             try:
-                with open(product_image, 'rb') as photo:
+                with open(f"images/{product_image}", 'rb') as photo:
                     await bot.send_photo(
                         chat_id=message.chat.id,
                         photo=photo,
