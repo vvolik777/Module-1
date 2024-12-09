@@ -3,12 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add(KeyboardButton("Рассчитать"), KeyboardButton("Информация"))
 keyboard.add(KeyboardButton("Купить"))
-
-inline_keyboard = InlineKeyboardMarkup(row_width=1)
-inline_keyboard.add(
-    InlineKeyboardButton("Рассчитать норму калорий", callback_data="calories"),
-    InlineKeyboardButton("Формула расчёта", callback_data="formulas")
-)
+keyboard.add(KeyboardButton("Регистрация"))
 
 buy_menu = InlineKeyboardMarkup(row_width=1)
 buy_menu.add(
@@ -16,4 +11,10 @@ buy_menu.add(
     InlineKeyboardButton("Имбирный чай", callback_data="product_buying_2"),
     InlineKeyboardButton("Слимчай", callback_data="product_buying_3"),
     InlineKeyboardButton("Фитоформула", callback_data="product_buying_4")
+)
+
+inline_keyboard = InlineKeyboardMarkup(row_width=1)
+inline_keyboard.add(
+    InlineKeyboardButton("Рассчитать норму калорий", callback_data="calories"),
+    InlineKeyboardButton("Формула расчёта", callback_data="formulas")
 )
